@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'" />
+<!--
+    <link href="https://fonts.googleapis.com/css?family=Noto+Sans&display=swap" rel="stylesheet">
+-->
+    <link rel="stylesheet" href="css/styles.css" />
+    <link rel="stylesheet" href="./js/chartist/dist/chartist.css" />
+  </head>
+<body id="main">
+  <div id="wrap">
+    <div class="content">
+      <div id="dmm-container0" class="clearfix"></div>
+      <div id="dmm-container1" class="clearfix"></div>
+      <div id="dmm-container2" class="clearfix"></div>
+      <div id="dmm-container3" class="clearfix"></div>
+      <div id="second" class="clearfix">
+        <select id="interval" name="interval" class="mode">
+          <option selected="selected">Fast</option>
+          <option>Mid</option>
+          <option>Slow</option>
+        </select>
+        <div class="switch">
+          <input id="hold" type="checkbox" name="hold" /><label for="hold">HOLD</label>
+          <input id="graph" type="checkbox" name="graph" /><label for="graph">GRAPH</label>
+          <button id="load" type="button" name="load">LOAD</button>
+        </div>
+      </div>
+      <div>
+        <div id="stat-container0" class="hide"></div>
+        <div id="stat-time" class="hide">
+          <div class="stat-long-box">
+            <p id="stat-time-label" class="stat-long-label">Time</p>
+            <p id="stat-time-val" class="stat-long-val">H:M:S.msec</p>
+          </div>
+        </div>
+      </div>
+      <div id="stat-container1" class="hide"></div>
+      <div id="stat-container2" class="hide"></div>
+      <div id="stat-container3" class="hide"></div>
+      <div id="chart-container" class="hide"></div>
+      <div id="graph-menu" class="hide">
+        <div class="switch">
+          <div class="runbtn">
+            <input id="run" type="checkbox" name="run" /><label for="run"></label>
+          </div>
+        </div>
+          <button id="save" type="button" name="save">SAVE</button>
+          <button id="reset-zoom" type="button" name="reset-zoom">RESET ZOOM</button>
+        </div>
+    </div>
+  </div>
+
+  <script src="js/renderer.js"></script>
+</body>
+
+</html>
