@@ -4,6 +4,10 @@
   "version": "0.2.0",
   "description": "My Electron application description",
   "main": "src/main.js",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/toolbitorg/choppy-app.git"
+  },
   "scripts": {
     "start": "electron-forge start",
     "package": "electron-forge package",
@@ -12,6 +16,7 @@
     "lint": "echo \"No linting configured\""
   },
   "dependencies": {
+    "electron-log": "^5.2.4",
     "electron-squirrel-startup": "^1.0.1",
     "electron-store": "^8.2.0",
     "electron-window-state": "^5.0.3",
@@ -25,6 +30,7 @@
     "@electron-forge/maker-zip": "^7.6.0",
     "@electron-forge/plugin-auto-unpack-natives": "^7.6.0",
     "@electron-forge/plugin-fuses": "^7.6.0",
+    "@electron-forge/publisher-github": "^7.6.1",
     "@electron/fuses": "^1.8.0",
     "electron": "33.2.1"
   },

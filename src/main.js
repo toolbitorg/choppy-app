@@ -2,12 +2,20 @@
 //import { app, BrowserWindow } from 'electron';
 //import path from 'node:path';
 //import started from 'electron-squirrel-startup';
-const { app, BrowserWindow, ipcMain } = require('electron');
+const { app, BrowserWindow, autoUpdater, dialog ,ipcMain } = require('electron');
 const path = require('node:path');
 const started = require('electron-squirrel-startup');
 
 const windowStateKeeper = require('electron-window-state');
 let mainWindow;
+
+
+// Logging
+const log = require('electron-log');
+autoUpdater.logger = log;
+autoUpdater.logger.transports.file.level = 'info';
+log.info('App starting...');
+
 
 const Store = require('electron-store');
 store = new Store({
@@ -74,7 +82,9 @@ const createWindow = () => {
   mainWindow.loadFile(path.join(__dirname, 'index.html'));
 
   // Open the DevTools.
-  mainWindow.webContents.openDevTools();
+  if (!app.isPackaged) {
+    mainWindow.webContents.openDevTools();
+  }
 };
 
 const gotTheLock = app.requestSingleInstanceLock();
@@ -113,6 +123,54 @@ app.on('window-all-closed', () => {
 // In this file you can include the rest of your app's specific main process
 // code. You can also put them in separate files and import them here.
 
+// Auto update
+const server = "https://update.electronjs.org";
+const feed = `${server}/toolbitorg/choppy-app/${process.platform}-${process.arch}/${app.getVersion()}`;
+console.log(feed);
+if (app.isPackaged) {
+  autoUpdater.setFeedURL({ url: feed });
+  autoUpdater.checkForUpdates();
+
+  // When new software version is downloaded
+  autoUpdater.on("update-downloaded", async () => {
+    const returnValue = await dialog.showMessageBox({
+      type: "info",
+      title: "Update Available",
+      message:
+        "The new version has been downloaded. Please restart the application to apply the updates.?",
+      buttons: ["Restart", "Later"],
+    });
+    if (returnValue.response === 0) autoUpdater.quitAndInstall();
+  });
+
+  // When it is checking for update
+  autoUpdater.on("checking-for-update", () => {
+    console.log("Checking for update...");
+  });
+
+  // When there is new software version
+  autoUpdater.on("update-available", () => {
+    dialog.showMessageBox({
+      message: "The new version is available. Download starts automatically.",
+      buttons: ["OK"],
+    });
+  });
+
+  // When there is no update
+  autoUpdater.on("update-not-available", () => {
+    /*
+    dialog.showMessageBox({
+      message: "No updates available",
+      buttons: ["OK"],
+    });
+    */
+  });
+
+  autoUpdater.on("error", (error) => {
+    console.error(error);
+  });
+}
+
 
 /*
 ipc.on('get-app-version', function(event) {
@@ -133,4 +191,7 @@ ipcMain.on("set-store-data", function(event, key, data) {
 ipcMain.on("get-store-data", function(event, key) {
   event.returnValue = store.get(key);
 })
+
+
+
 
