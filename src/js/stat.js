@@ -124,6 +124,9 @@ class Stat {
 
     let i = 0;
     let len = this.plotdat.length;
+    let x_begin = 0.0;
+    let x_end = 0.0;
+    let area = 0.0;
     if(len==0) {
       return;
     }
@@ -132,15 +135,14 @@ class Stat {
       i++;
     }
 
+    x_begin = this.plotdat[i]['x'];
     this.max=this.plotdat[i]['y'];
     this.min=this.plotdat[i]['y'];
-    this.ave=this.plotdat[i]['y'];
-    var num = 1;
     i++;
 
     while(i<len && this.plotdat[i]['x']<x2) {
       this.ave += this.plotdat[i]['y'];
-      num++;
+      area = area + (this.plotdat[i-1]['y']+this.plotdat[i]['y'])*(this.plotdat[i]['x']-this.plotdat[i-1]['x']) / 2.0;
       if(this.max<this.plotdat[i]['y']) {
         this.max=this.plotdat[i]['y'];
       } else if (this.min>this.plotdat[i]['y']) {
@@ -148,7 +150,8 @@ class Stat {
       }
       i++;
     }
-    this.ave = this.ave / num;
+    x_end = this.plotdat[i-1]['x'];
+    this.ave = area / (x_end - x_begin);
 
     this.updateValAndUnit();
   }
