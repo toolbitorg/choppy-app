@@ -20,7 +20,7 @@ log.info('App starting...');
 const Store = require('electron-store');
 store = new Store({
   defaults: {
-    test: 'testres'
+    agreement: false
   }
 });
 
@@ -97,8 +97,26 @@ if (!gotTheLock) {
 // This method will be called when Electron has finished
 // initialization and is ready to create browser windows.
 // Some APIs can only be used after this event occurs.
-app.whenReady().then(() => {
+app.whenReady().then( async () => {
   ipcMain.on('set-title', handleSetTitle);  
+
+  if(!store.get('agreement')) {
+    const returnValue = await dialog.showMessageBox({
+      type: "info",
+      title: "",
+      message:
+        "This software is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of merchantability or fitness for a particular purpose. See the GNU General Public License for more details.\n\n"
+        + "When a new version is available, this software will automatically download it.\n\n"
+        + "To improve and optimize the experience in the software, information about your usage of the software will be collected. You can see the source code to check what kind of information is used.",
+      buttons: ["Disagree", "Agree"],
+    });
+    if (returnValue.response === 0) {
+      app.quit();
+    } else {
+      store.set('agreement', app.getVersion());
+    }  
+  }
+
   createWindow();
 
   // On OS X it's common to re-create a window in the app when the
@@ -137,7 +155,7 @@ if (app.isPackaged) {
       type: "info",
       title: "Update Available",
       message:
-        "The new version has been downloaded. Please restart the application to apply the updates.?",
+        "The new version has been downloaded. Please restart the application to apply the updates.",
       buttons: ["Restart", "Later"],
     });
     if (returnValue.response === 0) autoUpdater.quitAndInstall();
