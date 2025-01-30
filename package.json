@@ -2,7 +2,7 @@
   "name": "choppy-app",
   "productName": "choppy-app",
   "version": "0.2.3",
-  "description": "My Electron application description",
+  "description": "Choppy application for voltage and current measurement",
   "main": "src/main.js",
   "repository": {
     "type": "git",
@@ -35,6 +35,6 @@
     "electron": "33.2.1"
   },
   "keywords": [],
-  "author": "ohamax",
-  "license": "MIT"
+  "author": "ohamax <toolbitorg@gmail.com>",
+  "license": "GPL-2.0-only"
 }
