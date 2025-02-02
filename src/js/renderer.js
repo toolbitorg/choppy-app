@@ -110,8 +110,7 @@ var fsm = new StateMachine({
   }
 });
 
-//const Choppy=require('./toolbit-mswin.node').Choppy;
-const TbiDeviceManager=require('./toolbit-mswin.node').TbiDeviceManager;
+const TbiDeviceManager=require('./js/toolbit-lib/index').TbiDeviceManager;
 var tbiDeviceManager = new TbiDeviceManager();
 var connectedDmmNum = 0;
 var waveformsNum = 0;

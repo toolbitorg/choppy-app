@@ -6,7 +6,7 @@ class Dmmctrl {
     this.id = id;
     this.fsm = fsm;
 
-    const Dmm=require('../toolbit-mswin.node').Choppy;
+    const Dmm=require('./toolbit-lib/index').Choppy;
 
     this.dmm_ = new Dmm();
     this.plotdat_ = [];
