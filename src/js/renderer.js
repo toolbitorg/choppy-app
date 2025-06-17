@@ -11,7 +11,7 @@ const HEIGHT_FOR_MIN = 80;
 const HEIGHT_FOR_METER = 63;
 const HEIGHT_FOR_STAT = 34;
 const HEIGHT_FOR_GRAPH = 450;
-
+const maxDmmNum = 4;
 
 const Chartist=require('./js/chartist/dist/chartist')
 require('./js/chartist-plugin-zoom/dist/chartist-plugin-zoom')
@@ -194,7 +194,12 @@ function openDevice() {
     window.setTimeout(openDevice, 3000);
     return;
   }
-  for(var i=0; i<serials.size(); i++) {
+  if(serials.size()<maxDmmNum) {
+    connectedDmmNum = serials.size();
+  } else {
+    connectedDmmNum = maxDmmNum;
+  }
+  for(var i=0; i<connectedDmmNum; i++) {
 
     dmmctrl[i] = new Dmmctrl(dmmContainers[i],fsm);
     if(dmmctrl[i].dmm.open(serials.get(i))) {
@@ -204,7 +209,6 @@ function openDevice() {
     }
 
     document.getElementById('graph').disable = false;
-    connectedDmmNum++;
     window.resizeBy(0, HEIGHT_FOR_METER);
   }
 
@@ -349,10 +353,14 @@ function onZoom(chart, reset) {
     chart.update(chart.data, chart.options);
     return;
   }
+  var maxVal = 0;
   for(var i=0; i<waveformsNum; i++) {
-      stat[i].showStat(chart.options.axisX.highLow.low, chart.options.axisX.highLow.high);
+    stat[i].showStat(chart.options.axisX.highLow.low, chart.options.axisX.highLow.high);
+    if(maxVal < stat[i].max) {
+      maxVal=stat[i].max;
+    }
   }
-  chart.options.axisY.highLow = { low: 0, high: stat[0].max };
+  chart.options.axisY.highLow = { low: 0, high: maxVal };
 
   if(chart.options.axisX.highLow.high-chart.options.axisX.highLow.low<1500) {
     chart.options.showPoint = true;
@@ -372,7 +380,7 @@ function initializeGraph() {
       series: [
         {
           name: 'series-1',   // Red
-          data: plotData[3]
+          data: plotData[2]
         },
         {
           name: 'series-2',   // Pink
@@ -384,7 +392,7 @@ function initializeGraph() {
         },
         {
           name: 'series-4',   // Brown
-          data: plotData[2]
+          data: plotData[3]
         },
         {
           name: 'series-5',   // Dark blue
@@ -468,8 +476,11 @@ function initializeGraph() {
   for(var i=0; i<4; i++) {
     var divElem = document.getElementById('stat-container'+ i);
     if(i<waveformsNum && divElem.className=="hide") {
-//      divElem.className = 'clearfix';
-      divElem.className = 'float';
+      if(i==waveformsNum-1) {
+        divElem.className = 'float';
+      } else {
+        divElem.className = 'clearfix';
+      }
       window.resizeBy(0, HEIGHT_FOR_STAT);
     } else if(i>=waveformsNum && divElem.className=="clearfix") {
       divElem.className = 'hide';

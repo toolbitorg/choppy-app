@@ -62,7 +62,8 @@ const createWindow = () => {
     minWidth: 580,
     maxWidth: 1920,
     minHeight: 80,
-    maxHeight: 640+20,
+//    maxHeight: 640+20,
+    maxHeight: 1000+20,
     webPreferences: {
       nodeIntegration: true, // Node.jsの統合を有効化
       contextIsolation: false, // コンテキスト分離を無効化
