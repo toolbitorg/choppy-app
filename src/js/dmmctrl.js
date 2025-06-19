@@ -9,6 +9,7 @@ class Dmmctrl {
     const Dmm=require('./toolbit-lib/index').Choppy;
 
     this.dmm_ = new Dmm();
+    this.color_ = 0;
     this.plotdat_ = [];
     this.mode_;
     this.range;
@@ -21,6 +22,10 @@ class Dmmctrl {
 
   get dmm() {
     return this.dmm_;
+  }
+
+  get color() {
+    return this.color_;
   }
 
   get plotdat() {
@@ -52,7 +57,7 @@ class Dmmctrl {
     '    </select>'+
     '  </div>'+
     '</div>';
-
+    
     this.mode_ = document.getElementById(this.id + '-mode').value;
     this.range = document.getElementById(this.id + '-range').value;
 
@@ -91,6 +96,14 @@ class Dmmctrl {
       target.value = val;
     }
     target.dispatchEvent(new Event('change'));
+  }
+
+  setColor() {
+    this.color_ = this.dmm_.getColor();
+    if(this.color_==1) { document.getElementById(this.id + '-ch-color').classList.add("color-brown"); }
+    else if(this.color_==2) { document.getElementById(this.id + '-ch-color').classList.add("color-red"); }
+    else if(this.color_==6) { document.getElementById(this.id + '-ch-color').classList.add("color-blue"); }
+    else { document.getElementById(this.id + '-ch-color').classList.add("color-green"); }
   }
 
   setHold(val) {

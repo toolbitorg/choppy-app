@@ -62,6 +62,13 @@ class Stat {
     this.clearStat();
   }
 
+  setColor(bgcolor) {
+    if(bgcolor==1) { document.getElementById(this.id + '-ch-color').classList.add("color-brown"); }
+    else if(bgcolor==2) { document.getElementById(this.id + '-ch-color').classList.add("color-red"); }
+    else if(bgcolor==6) { document.getElementById(this.id + '-ch-color').classList.add("color-blue"); }
+    else { document.getElementById(this.id + '-ch-color').classList.add("color-green"); }
+  }
+
   setData(plotdat, mode) {
     this.plotdat = plotdat;
     this.mode = mode;

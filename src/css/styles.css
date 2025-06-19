@@ -42,19 +42,19 @@ body {
   height: 57px;
 }
 
-#dmm-container0-ch-color, #stat-container0-ch-color {
+.color-green {
   background-color: #599228;
 }
 
-#dmm-container1-ch-color, #stat-container1-ch-color {
+.color-blue {
   background-color: #0544D3;
 }
 
-#dmm-container2-ch-color, #stat-container2-ch-color {
+.color-red {
   background-color: #D70206;
 }
 
-#dmm-container3-ch-color, #stat-container3-ch-color {
+.color-brown {
   background-color: #895129;
 }
 

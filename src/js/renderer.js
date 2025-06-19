@@ -115,6 +115,7 @@ var tbiDeviceManager = new TbiDeviceManager();
 var connectedDmmNum = 0;
 var waveformsNum = 0;
 
+const DmmDevManager=require('./js/dmmdevmanager');
 const Dmmctrl=require('./js/dmmctrl');
 const Stat=require('./js/stat');
 //const Timerange=require('./js/timerange');
@@ -126,6 +127,7 @@ var plotOptions = [{}, {}, {}, {}];
 
 var timeInterval;
 var plotData = [[],[],[],[]];
+var plotDataForChart = [[],[],[],[]];
 var plotStart = new Date();
 var chart;
 
@@ -199,14 +201,20 @@ function openDevice() {
   } else {
     connectedDmmNum = maxDmmNum;
   }
+
+  var dmmdevmanager = new DmmDevManager();
+  var sortedlist = dmmdevmanager.sortSerialListByColor(serials);
+
   for(var i=0; i<connectedDmmNum; i++) {
 
     dmmctrl[i] = new Dmmctrl(dmmContainers[i],fsm);
-    if(dmmctrl[i].dmm.open(serials.get(i))) {
+    if(dmmctrl[i].dmm.open(sortedlist[i])) {
       // Fail to open and then try it later
       window.setTimeout(openDevice, 3000);
       return;
-    }
+    }  
+
+    dmmctrl[i].setColor();
 
     document.getElementById('graph').disable = false;
     window.resizeBy(0, HEIGHT_FOR_METER);
@@ -287,6 +295,11 @@ function initialize() {
         plotInfo = data[0];
         plotOptions = data[1];
         plotData = data[2];
+        plotDataForChart = data[2];
+        stat[0].setColor(5);
+        stat[1].setColor(6);
+        stat[2].setColor(2);
+        stat[3].setColor(1);
         plotStart = new Date(0);
         fsm.load();
         initializeGraph();
@@ -312,6 +325,9 @@ function initialize() {
  
   for(var i=0; i<4; i++) {
     stat[i] = new Stat(statContainers[i]);
+  }
+  for(var i=0; i<connectedDmmNum; i++) {
+    stat[i].setColor(dmmctrl[i].color);
   }
 }
 
@@ -380,7 +396,7 @@ function initializeGraph() {
       series: [
         {
           name: 'series-1',   // Red
-          data: plotData[2]
+          data: plotDataForChart[2]
         },
         {
           name: 'series-2',   // Pink
@@ -392,7 +408,7 @@ function initializeGraph() {
         },
         {
           name: 'series-4',   // Brown
-          data: plotData[3]
+          data: plotDataForChart[3]
         },
         {
           name: 'series-5',   // Dark blue
@@ -400,11 +416,11 @@ function initializeGraph() {
         },
         {
           name: 'series-6',   // Green
-          data: plotData[0]
+          data: plotDataForChart[0]
         },
         {
           name: 'series-7',   // Blue
-          data: plotData[1]
+          data: plotDataForChart[1]
         },
         {
           name: 'to-show-zero-point',
@@ -501,9 +517,15 @@ function clearGraph() {
     fsm.resetZoom();
   }
   plotData = [[],[],[],[]];
+  plotDataForChart = [[],[],[],[]];
   for(var i=0; i<connectedDmmNum; i++) {
     dmmctrl[i].clearPlotdat();
     plotData[i] = dmmctrl[i].plotdat;
+    var color = dmmctrl[i].color;
+    if(color==1) { plotDataForChart[3] = dmmctrl[i].plotdat; }  // color-brown
+    else if(color==2) { plotDataForChart[2] = dmmctrl[i].plotdat; }  // color-red
+    else if(color==6) { plotDataForChart[1] = dmmctrl[i].plotdat; }  // color-blue
+    else { plotDataForChart[0] = dmmctrl[i].plotdat; }  // color-green
   }
   initializeGraph();
   chart.update();
