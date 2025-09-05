@@ -110,8 +110,6 @@ var fsm = new StateMachine({
   }
 });
 
-const TbiDeviceManager=require('./js/toolbit-lib/index').TbiDeviceManager;
-var tbiDeviceManager = new TbiDeviceManager();
 var connectedDmmNum = 0;
 var waveformsNum = 0;
 
@@ -187,35 +185,26 @@ function enableElements(elems) {
 }
 
 function openDevice() {
-  tbiDeviceManager.updateDeviceList();
-  var serials = tbiDeviceManager.getSerialList('Choppy');
-  console.log('The number of detected Choppy: ' + serials.size());
+  var dmmDevManager = new DmmDevManager();
+  var devlist = dmmDevManager.getDeviceList();
+  console.log('The number of detected devices: ' + devlist.length);
 
-  if(serials.size()==0) {
+  if(devlist.length==0) {
     // Fail to open and then try it later
     window.setTimeout(openDevice, 3000);
     return;
   }
-  if(serials.size()<maxDmmNum) {
-    connectedDmmNum = serials.size();
+  if(devlist.length<maxDmmNum) {
+    connectedDmmNum = devlist.length;
   } else {
     connectedDmmNum = maxDmmNum;
   }
 
-  var dmmdevmanager = new DmmDevManager();
-  var sortedlist = dmmdevmanager.sortSerialListByColor(serials);
+  console.log(devlist);
 
   for(var i=0; i<connectedDmmNum; i++) {
-
-    dmmctrl[i] = new Dmmctrl(dmmContainers[i],fsm);
-    if(dmmctrl[i].dmm.open(sortedlist[i])) {
-      // Fail to open and then try it later
-      window.setTimeout(openDevice, 3000);
-      return;
-    }  
-
+    dmmctrl[i] = new Dmmctrl(dmmContainers[i], fsm, devlist[i][0], devlist[i][1]);
     dmmctrl[i].setColor();
-
     document.getElementById('graph').disable = false;
     window.resizeBy(0, HEIGHT_FOR_METER);
   }

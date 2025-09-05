@@ -90,3 +90,7 @@ typings/
 
 # Electron-Forge
 out/
+
+
+# vs code workspace
+choppy-app.code-workspace

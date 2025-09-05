@@ -1,14 +1,22 @@
 const { ipcRenderer } = require('electron');
+const Choppy=require('./toolbit-lib/index').Choppy;
+const Dmm=require('./toolbit-lib/index').Dmm;
 
 class Dmmctrl {
 
-  constructor(id, fsm) {
+  constructor(id, fsm, serial, devname) {
     this.id = id;
     this.fsm = fsm;
+    this.serial = serial;
+    this.devname = devname;
 
-    const Dmm=require('./toolbit-lib/index').Choppy;
+    if(devname==='Choppy') {
+      this.dmm_ = new Choppy();
+    } else {
+      this.dmm_ = new Dmm();
+    }
+    this.dmm_.open(serial);
 
-    this.dmm_ = new Dmm();
     this.color_ = 0;
     this.plotdat_ = [];
     this.mode_;
@@ -18,10 +26,6 @@ class Dmmctrl {
     this.unit = '';
 
     this.init();
-  }
-
-  get dmm() {
-    return this.dmm_;
   }
 
   get color() {
@@ -99,7 +103,11 @@ class Dmmctrl {
   }
 
   setColor() {
-    this.color_ = this.dmm_.getColor();
+    if(this.devname==='Choppy') {
+      this.color_ = this.dmm_.getColor();
+    } else {
+      this.color_ = 5;
+    }
     if(this.color_==1) { document.getElementById(this.id + '-ch-color').classList.add("color-brown"); }
     else if(this.color_==2) { document.getElementById(this.id + '-ch-color').classList.add("color-red"); }
     else if(this.color_==6) { document.getElementById(this.id + '-ch-color').classList.add("color-blue"); }

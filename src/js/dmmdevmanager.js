@@ -1,33 +1,54 @@
+const TbiDeviceManager=require('./toolbit-lib/index').TbiDeviceManager;
+const Choppy=require('./toolbit-lib/index').Choppy;
+
+
 class DmmDevManager {
 
   constructor() {
-    const Dmm=require('./toolbit-lib/index').Choppy;
-    this.dmm = new Dmm();
+    this.devlist = [];
   }
 
-  sortSerialListByColor(serials) {
-    var list = [];
+  getDeviceList() {
+    const tbiDeviceManager = new TbiDeviceManager();
+    this.devlist = this.#convertTbiSerialListToArray('DMM1', tbiDeviceManager.getSerialList('DMM1'));
+    this.devlist = this.devlist.concat(
+      this.#sortChoppyListByColor(this.#convertTbiSerialListToArray('Choppy', tbiDeviceManager.getSerialList('Choppy')))
+    );
+    return this.devlist;
+  }
 
-    if(serials.size()==0) {
-      // nothing to do
-      return list;
-    }
+  #convertTbiSerialListToArray(devname, serials) {
+    let devlist = [];
     for(var i=0; i<serials.size(); i++) {
-      if(this.dmm.open(serials.get(i))) {
+      devlist.push([serials.get(i), devname]) 
+    }
+    return devlist;
+  }
+
+  #sortChoppyListByColor(devlist) {
+    const dmm = new Choppy;
+    let res = [];
+    
+    if(devlist.length==0) {
+      // nothing to do
+      return res;
+    }
+    for(var i=0; i<devlist.length; i++) {
+      if(dmm.open(devlist[i][0])) {
         // Fail to open
-        return list;
+        return res;
       }
-      var color = this.dmm.getColor();
+      var color = dmm.getColor();
       var order = 0;
       if(color==5) { order = 0; }                 // 5: green
       else if(color==6) { order = 1; }            // 6: blue
       else if(color==2) { order = 2; }            // 2: red
       else if(color==1) { order = 3; }            // 1: brown    
-      list.push([order, serials.get(i)]);
-      this.dmm.close();
+      res.push([order, devlist[i]]);
+      dmm.close();
     }
     // sort list by color
-    return list.sort((a, b) => a[0] - b[0]).map(item => item[1]);
+    return res.sort((a, b) => a[0] - b[0]).map(item => item[1]);
   }
 
 }
