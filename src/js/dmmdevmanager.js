@@ -38,6 +38,9 @@ class DmmDevManager {
         // Fail to open
         return res;
       }
+      //console.log('ProductName / Serial / FwVer / Color');
+      console.log('Name:'+dmm.getProductName()+' Serial:'+dmm.getProductSerial()+' FW:'+dmm.getFirmVersion()+' Color:'+dmm.getColor());
+      
       var color = dmm.getColor();
       var order = 0;
       if(color==5) { order = 0; }                 // 5: green

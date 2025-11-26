@@ -1,9 +1,31 @@
 const { ipcRenderer } = require('electron');
-const Choppy=require('./toolbit-lib/index').Choppy;
-const Dmm=require('./toolbit-lib/index').Dmm;
+const Choppy = require('./toolbit-lib/index').Choppy;
+const Dmm = require('./toolbit-lib/index').Dmm;
 
 class Dmmctrl {
 
+  // Private field
+  #holdChecked = false;
+  #hold = false;
+  #dmm;
+
+  // Public field
+  mode;
+  measurements = {
+    voltage: {
+      name: undefined,
+      mode: undefined,
+      records: [],
+      color: undefined,
+    },
+    current: {
+      name: undefined,
+      mode: undefined,
+      records: [],
+      color: undefined,
+    },
+  };
+  
   constructor(id, fsm, serial, devname) {
     this.id = id;
     this.fsm = fsm;
@@ -11,91 +33,102 @@ class Dmmctrl {
     this.devname = devname;
 
     if(devname==='Choppy') {
-      this.dmm_ = new Choppy();
+      this.#dmm = new Choppy();
     } else {
-      this.dmm_ = new Dmm();
+      this.#dmm = new Dmm();
     }
-    this.dmm_.open(serial);
-
-    this.color_ = 0;
-    this.plotdat_ = [];
-    this.mode_;
-    this.range;
-    this.holdChecked = false;
-    this.hold = false;
-    this.unit = '';
-
-    this.init();
+    ipcRenderer.send('log-to-terminal', 'Call dmm.open(serial)');
+    if(this.#dmm.open(serial)) {
+      ipcRenderer.send('log-to-terminal', '[ERR] Fail to open device');
+    };
+    ipcRenderer.send('log-to-terminal', 'Call initialize()');
+    this.initialize();
+    ipcRenderer.send('log-to-terminal', 'Call setColor()');
+    this.setColor();
   }
 
-  get color() {
-    return this.color_;
+  clearRecords() {
+    this.measurements.voltage.records = [];
+    this.measurements.current.records = [];
   }
 
-  get plotdat() {
-    return this.plotdat_;
-  }
+  initialize() {
+    const items = ['V', 'A'];
 
-  get mode() {
-    return this.mode_;
-  }
+    const divElem = document.getElementById(this.id);
+    divElem.innerHTML = 
+      '<div id="' + this.id + '-meter-container" class="meter-container">' +
+      '  <div id="' + this.id + '-ch-color" class="ch-color"></div>' +
+      '  <select id="' + this.id + '-meter-mode" class="meter-mode">' +
+      '    <option selected="selected">V</option>' +
+      '    <option>A</option>' +
+      '    <option>V+A</option>' +
+      '  </select>' +
+      items.map(item => 
+        '<div id="' + this.id + '-meter' + item + '-val" class="meter-val">_.___</div>' +
+        '<div id="' + this.id + '-meter' + item + '-unit" class="meter-unit">m' + item + '</div>' +
+        '<div id="' + this.id + '-ctrl' + item + '" class="col">' +
+        '  <select id="' + this.id + '-meter' + item + '-range" class="meter-range">' +
+        '    <option selected="selected">Auto</option>' +
+        '    <option> ' + item + '</option>' +
+        '    <option>m' + item + '</option>' +
+        '    <option>u' + item + '</option>' +
+        '  </select>' +
+        '</div>'
+      ).join("") +
+      '</div>';
 
-  init() {
-    var divElem = document.getElementById(this.id);
-    divElem.innerHTML =
-    '<div id="top">'+
-    '  <div class="left">'+
-    '    <div id="' + this.id + '-ch-color" class="ch-color"></div>'+
-    '  </div>'+
-    '  <div class="middle">'+
-    '    <p id="' + this.id + '-disp-val" class="disp-val">0.123</p>'+
-    '  </div>'+
-    '  <div class="right">'+
-    '    <p id="' + this.id + '-disp-unit" class="disp-unit">mA</p>'+
-    '    <select id="' + this.id + '-mode" name="mode" class="mode">'+
-    '      <option selected="selected">V</option>'+
-    '      <option>A</option>'+
-    '    </select>'+
-    '    <br>'+
-    '    <select id="' + this.id + '-range" name="range" class="mode">'+
-    '    </select>'+
-    '  </div>'+
-    '</div>';
-    
-    this.mode_ = document.getElementById(this.id + '-mode').value;
-    this.range = document.getElementById(this.id + '-range').value;
+    for (const item of items) {      
+      document.getElementById(this.id + '-meter' + item + '-val').addEventListener('mousedown', (event) => {
+        this.#hold = true;
+      });
 
-    document.getElementById(this.id + '-mode').addEventListener('change', (event) => {
-      this.mode_ = event.target.value;
-      document.getElementById(this.id + '-range').innerHTML = 
-      '      <option selected="selected">Auto</option>'+
-      '      <option> ' + this.mode_ + '</option>'+
-      '      <option>m' + this.mode_ + '</option>'+
-      '      <option>u' + this.mode_ + '</option>';
-      this.range = 'Auto';
+      document.getElementById(this.id + '-meter' + item + '-val').addEventListener('mouseup', (event) => {
+        this.#hold = false;
+      });
+    }
+
+    document.getElementById(this.id + '-meter-mode').addEventListener('change', (event) => {
+      this.mode = event.target.value;
+      
+      if (this.mode === items[0]) {
+        this.measurements.voltage.mode = items[0];
+        this.measurements.current.mode = undefined;
+        document.getElementById(this.id + '-meter' + items[0] + '-val').style.display = '';
+        document.getElementById(this.id + '-meter' + items[0] + '-unit').style.display = '';
+        document.getElementById(this.id + '-ctrl' + items[0]).style.display = '';
+        document.getElementById(this.id + '-meter' + items[1] + '-val').style.display = 'none';
+        document.getElementById(this.id + '-meter' + items[1] + '-unit').style.display = 'none';
+        document.getElementById(this.id + '-ctrl' + items[1]).style.display = 'none';
+      } else if (this.mode === items[1]) {
+        this.measurements.voltage.mode = undefined;
+        this.measurements.current.mode = items[1];
+        document.getElementById(this.id + '-meter' + items[0] + '-val').style.display = 'none';
+        document.getElementById(this.id + '-meter' + items[0] + '-unit').style.display = 'none';
+        document.getElementById(this.id + '-ctrl' + items[0]).style.display = 'none';
+        document.getElementById(this.id + '-meter' + items[1] + '-val').style.display = '';
+        document.getElementById(this.id + '-meter' + items[1] + '-unit').style.display = '';
+        document.getElementById(this.id + '-ctrl' + items[1]).style.display = '';
+      } else if (this.mode === items[0] + '+' + items[1]) {
+        this.measurements.voltage.mode = items[0];
+        this.measurements.current.mode = items[1];
+        document.getElementById(this.id + '-meter' + items[0] + '-val').style.display = '';
+        document.getElementById(this.id + '-meter' + items[0] + '-unit').style.display = '';
+        document.getElementById(this.id + '-ctrl' + items[0]).style.display = '';
+        document.getElementById(this.id + '-meter' + items[1] + '-val').style.display = '';
+        document.getElementById(this.id + '-meter' + items[1] + '-unit').style.display = '';
+        document.getElementById(this.id + '-ctrl' + items[1]).style.display = '';
+      }
+
       if(this.fsm.state=='run' || this.fsm.state=='run-zoom')  {
         this.fsm.onStopLogging();
         this.fsm.onStartLogging();
       }
-      ipcRenderer.send('set-store-data', 'mode', this.mode_);
+      ipcRenderer.send('set-store-data', this.id + '-meter-mode', this.mode);
     });
 
-    document.getElementById(this.id + '-range').addEventListener('change', (event) => {
-      this.range = event.target.value;
-    });
-
-    document.getElementById(this.id + '-disp-val').addEventListener('mousedown', (event) => {
-      this.hold = true;
-    });
-    document.getElementById(this.id + '-disp-val').addEventListener('mouseup', (event) => {
-      this.hold = false;
-    });
-    document.getElementById(this.id + '-disp-val').addEventListener('mouseout', (event) => {
-      this.hold = false;
-    });
-
-    let target = document.getElementById(this.id + '-mode');
-    let val = ipcRenderer.sendSync('get-store-data', 'mode');
+    let target = document.getElementById(this.id + '-meter-mode');
+    let val = ipcRenderer.sendSync('get-store-data', this.id + '-meter-mode');
     if(val) {
       target.value = val;
     }
@@ -104,51 +137,70 @@ class Dmmctrl {
 
   setColor() {
     if(this.devname==='Choppy') {
-      this.color_ = this.dmm_.getColor();
+      ipcRenderer.send('log-to-terminal', 'Call #dmm.getColor()');
+      this.color = this.#dmm.getColor();
+      ipcRenderer.send('log-to-terminal', '#dmm.getColor() is done');
+      this.measurements.voltage.color = this.color;
+      this.measurements.current.color = this.color;
     } else {
-      this.color_ = 5;
+      this.measurements.voltage.color = 5;  // Default green
+      this.measurements.current.color = 5;
     }
-    if(this.color_==1) { document.getElementById(this.id + '-ch-color').classList.add("color-brown"); }
-    else if(this.color_==2) { document.getElementById(this.id + '-ch-color').classList.add("color-red"); }
-    else if(this.color_==6) { document.getElementById(this.id + '-ch-color').classList.add("color-blue"); }
-    else { document.getElementById(this.id + '-ch-color').classList.add("color-green"); }
+    document.getElementById(this.id + '-ch-color').classList.remove('color-brown');
+    document.getElementById(this.id + '-ch-color').classList.remove('color-red');
+    document.getElementById(this.id + '-ch-color').classList.remove('color-blue');
+    document.getElementById(this.id + '-ch-color').classList.remove('color-green');
+    if(this.measurements.voltage.color==1) { document.getElementById(this.id + '-ch-color').classList.add('color-brown'); }
+    else if(this.measurements.voltage.color==2) { document.getElementById(this.id + '-ch-color').classList.add('color-red'); }
+    else if(this.measurements.voltage.color==6) { document.getElementById(this.id + '-ch-color').classList.add('color-blue'); }
+    else { document.getElementById(this.id + '-ch-color').classList.add('color-green'); }
   }
 
   setHold(val) {
-    this.holdChecked = val;
-  }
-
-  clearPlotdat() {
-    delete this.plotdat_;
-    this.plotdat_ = [];
+    this.#holdChecked = val;
   }
 
   acquisition(tdiff, isItRecording) {
-    var val;
+    var volt;
+    var curr;
 
-    if(this.mode_=='V') {
-      val = this.dmm_.getVoltage();
-    } else if(this.mode_=='A') {
-      val = this.dmm_.getCurrent();
+    if(this.mode==='V') {
+      volt = this.#dmm.getVoltage();
+    } else if(this.mode==='A') {
+      curr = this.#dmm.getCurrent();
+    } else if(this.mode==='V+A') {
+      volt = this.#dmm.getVoltage();
+      curr = this.#dmm.getCurrent();
     };
 
-    if(isItRecording) {
-      this.plotdat_.push({x: tdiff, y: val});
+    if(!this.#holdChecked && !this.#hold) {
+      if(volt!==NaN && volt!==undefined) {
+        this.showVal(volt, 'V');
+      }
+      if(curr!==NaN && curr!==undefined) {
+        this.showVal(curr, 'A');
+      }
     }
 
-    if(!this.holdChecked && !this.hold) {
-      this.showVal(val);
+    if(isItRecording) {
+      if(volt!==NaN && volt!==undefined) {
+        this.measurements.voltage.records.push({x: tdiff, y: volt});
+      }
+      if(curr!==NaN && curr!==undefined) {
+        this.measurements.current.records.push({x: tdiff, y: curr});
+      }
     }
   }
 
-  getUnit(val) {
-    var unit = '';
+  getUnit(val, target) {
+    const range = document.getElementById(this.id + '-meter' + target + '-range').value
+    var unit = ' ';
 
-    if(this.range[0]=='u') {
+    if(range=='u' + target) {
       unit = 'u';
-    } else if(this.range[0]=='m') {
+    } else if(range=='m' + target) {
       unit = 'm';
-    } else if(this.range=='Auto') {
+    } else if(range=='Auto') {
       if(Math.abs(val)<0.001) {
         unit = 'u';
       }
@@ -156,7 +208,6 @@ class Dmmctrl {
         unit = 'm';
       }
     }
-
     return unit;
   }
 
@@ -166,7 +217,6 @@ class Dmmctrl {
     } else if(unit=='m') {
       val = val*1000.0;
     }
-
     var splitVal = String(Math.abs(val)).split('.');
     if(!splitVal[1]) {
       return val.toFixed(3);
@@ -180,14 +230,18 @@ class Dmmctrl {
     }
   }
 
-  showVal(val) {
-    var dispVal = document.getElementById(this.id + '-disp-val');
-    var dispUnit = document.getElementById(this.id + '-disp-unit');
-
-    this.unit = this.getUnit(val);
-    dispUnit.innerHTML = this.unit + this.mode_;
-    dispVal.innerHTML = this.getDispVal(val, this.unit);
+  showVal(val, target) {
+    const eleVal = document.getElementById(this.id + '-meter' + target + '-val');
+    const eleUnit = document.getElementById(this.id + '-meter' + target + '-unit');
+    const unit = this.getUnit(val, target);
+    eleUnit.innerHTML = unit + target;
+    eleVal.innerHTML = this.getDispVal(val, unit);
   }
+
+  close() {
+    this.#dmm.close();
+    ipcRenderer.send('log-to-terminal', 'Close the connected devices');
+  };
 
 }
 

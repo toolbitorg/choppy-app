@@ -1,54 +1,51 @@
 class Stat {
+  // Private field
+  #plotdat;
+  #range;
+  #unit = '';
+
+  // Public field
+  mode = '';
+  statMax;
+  statMin;
+  statAve;
+  statUnit;
+
+  max = 0.0;
+  min = 0.0;
+  ave = 0.0;
 
   constructor(id) {
     this.id = id;
-
-    this.plotdat;
-    this.mode = '';
-    this.range;
-    this.unit = '';
-
-    this.statMax;
-    this.statMin;
-    this.statAve;
-    this.statUnit;
-
-    this.max = 0.0;
-    this.min = 0.0;
-    this.ave = 0.0;
-
-    this.init();
+    this.initialize();
   }
 
-  init() {
+  initialize() {
     var divElem = document.getElementById(this.id);
     divElem.innerHTML =
-    '<div id="stat">'+
-    '  <div id="' + this.id + '-ch-color" class="ch-color"></div>'+
-    '  <div class="stat-box">'+
-    '    <p id="' + this.id + '-max-label" class="stat-label"> Max</p>'+
-    '    <p id="' + this.id + '-max-val" class="stat-val"></p>'+
-    '  </div>'+
-    '  <div class="stat-box">'+
-    '    <p id="' + this.id + '-min-label" class="stat-label"> Min</p>'+
-    '    <p id="' + this.id + '-min-val" class="stat-val"></p>'+
-    '  </div>'+
-    '  <div class="stat-box">'+
-    '    <p id="' + this.id + '-ave-label" class="stat-label"> Ave</p>'+
-    '    <p id="' + this.id + '-ave-val" class="stat-val"></p>'+
-    '  </div>'+
-    '  <p id="' + this.id + '-unit" class="stat-unit"></p>'+
-    '  <select id="' + this.id + '-range" name="range" class="mode">'+
-    '    <option selected="selected">Auto</option>'+
-    '    <option> V</option>'+
-    '    <option>mV</option>'+
-    '    <option>uV</option>'+
-    '  </select>'+
+    '<div id="stat" class="stat-container">' +
+    '  <div id="' + this.id + '-ch-color" class="ch-color"></div>' +
+    '  <div class="stat-box">' +
+    '    <div id="' + this.id + '-max-label" class="stat-label">Max</div>' +
+    '    <div id="' + this.id + '-max-val" class="stat-val"></div>' +
+    '  </div>' +
+    '  <div class="stat-box">' +
+    '    <div id="' + this.id + '-min-label" class="stat-label">Min</div>' +
+    '    <div id="' + this.id + '-min-val" class="stat-val"></div>' +
+    '  </div>' +
+    '  <div class="stat-box">' +
+    '    <div id="' + this.id + '-ave-label" class="stat-label">Ave</div>' +
+    '    <div id="' + this.id + '-ave-val" class="stat-val"></div>' +
+    '  </div>' +
+    '  <div id="' + this.id + '-unit" class="stat-unit"></div>' +
+    '  <select id="' + this.id + '-range" name="range" class="dropdown">' +
+    '    <option selected="selected">Auto</option>' +
+    '  </select>' +
     '</div>';
 
-    this.range = document.getElementById(this.id + '-range').value;
+    this.#range = document.getElementById(this.id + '-range').value;
     document.getElementById(this.id + '-range').addEventListener('change', (event) => {
-      this.range = event.target.value;
+      this.#range = event.target.value;
 
       if(this.statMax.innerHTML != '') {
         this.updateValAndUnit();
@@ -59,36 +56,48 @@ class Stat {
     this.statMin = document.getElementById(this.id + '-min-val');
     this.statAve = document.getElementById(this.id + '-ave-val');
     this.statUnit = document.getElementById(this.id + '-unit');
-    this.clearStat();
+    this.statMax.innerHTML = '';
+    this.statMin.innerHTML = '';
+    this.statAve.innerHTML = '';
   }
 
   setColor(bgcolor) {
-    if(bgcolor==1) { document.getElementById(this.id + '-ch-color').classList.add("color-brown"); }
-    else if(bgcolor==2) { document.getElementById(this.id + '-ch-color').classList.add("color-red"); }
-    else if(bgcolor==6) { document.getElementById(this.id + '-ch-color').classList.add("color-blue"); }
-    else { document.getElementById(this.id + '-ch-color').classList.add("color-green"); }
+    document.getElementById(this.id + '-ch-color').classList.remove('color-brown');
+    document.getElementById(this.id + '-ch-color').classList.remove('color-red');
+    document.getElementById(this.id + '-ch-color').classList.remove('color-blue');
+    document.getElementById(this.id + '-ch-color').classList.remove('color-green');
+    if(bgcolor==1) {
+      document.getElementById(this.id + '-ch-color').classList.add('color-brown');
+    } else if(bgcolor==2) {
+      document.getElementById(this.id + '-ch-color').classList.add('color-red');
+    } else if(bgcolor==6) {
+      document.getElementById(this.id + '-ch-color').classList.add('color-blue');
+    } else { 
+      document.getElementById(this.id + '-ch-color').classList.add('color-green');
+    }
   }
 
-  setData(plotdat, mode) {
-    this.plotdat = plotdat;
-    this.mode = mode;
+  setData(data) {
+    this.#plotdat = data.records;
+    this.mode = data.mode;
+    this.setColor(data.color);
     document.getElementById(this.id + '-range').innerHTML =
-    '      <option selected="selected">Auto</option>'+
-    '      <option> ' + this.mode + '</option>'+
-    '      <option>m' + this.mode + '</option>'+
-    '      <option>u' + this.mode + '</option>';
-    this.range = 'Auto';
+      '<option selected="selected">Auto</option>'+
+      '<option> ' + this.mode + '</option>'+
+      '<option>m' + this.mode + '</option>'+
+      '<option>u' + this.mode + '</option>';
+    this.#range = 'Auto';
     this.clearStat();
   }
 
   getUnit(val) {
     var unit = '';
 
-    if(this.range[0]=='u') {
+    if(this.#range[0]=='u') {
       unit = 'u';
-    } else if(this.range[0]=='m') {
+    } else if(this.#range[0]=='m') {
       unit = 'm';
-    } else if(this.range=='Auto') {
+    } else if(this.#range=='Auto') {
       if(Math.abs(val)<0.001) {
         unit = 'u';
       }
@@ -128,9 +137,8 @@ class Stat {
   }
 
   showStat(x1, x2) {
-
     let i = 0;
-    let len = this.plotdat.length;
+    let len = this.#plotdat.length;
     let x_begin = 0.0;
     let x_end = 0.0;
     let area = 0.0;
@@ -138,26 +146,26 @@ class Stat {
       return;
     }
 
-    while(i<len && this.plotdat[i]['x']<x1) {
+    while(i<len && this.#plotdat[i]['x']<x1) {
       i++;
     }
 
-    x_begin = this.plotdat[i]['x'];
-    this.max=this.plotdat[i]['y'];
-    this.min=this.plotdat[i]['y'];
+    x_begin = this.#plotdat[i]['x'];
+    this.max=this.#plotdat[i]['y'];
+    this.min=this.#plotdat[i]['y'];
     i++;
 
-    while(i<len && this.plotdat[i]['x']<x2) {
-      this.ave += this.plotdat[i]['y'];
-      area = area + (this.plotdat[i-1]['y']+this.plotdat[i]['y'])*(this.plotdat[i]['x']-this.plotdat[i-1]['x']) / 2.0;
-      if(this.max<this.plotdat[i]['y']) {
-        this.max=this.plotdat[i]['y'];
-      } else if (this.min>this.plotdat[i]['y']) {
-        this.min=this.plotdat[i]['y'];
+    while(i<len && this.#plotdat[i]['x']<x2) {
+      this.ave += this.#plotdat[i]['y'];
+      area = area + (this.#plotdat[i-1]['y']+this.#plotdat[i]['y'])*(this.#plotdat[i]['x']-this.#plotdat[i-1]['x']) / 2.0;
+      if(this.max<this.#plotdat[i]['y']) {
+        this.max=this.#plotdat[i]['y'];
+      } else if (this.min>this.#plotdat[i]['y']) {
+        this.min=this.#plotdat[i]['y'];
       }
       i++;
     }
-    x_end = this.plotdat[i-1]['x'];
+    x_end = this.#plotdat[i-1]['x'];
     this.ave = area / (x_end - x_begin);
 
     this.updateValAndUnit();
@@ -165,14 +173,14 @@ class Stat {
 
   updateValAndUnit() {
     if(Math.abs(this.max)>Math.abs(this.min)){
-      this.unit = this.getUnit(this.max);
+      this.#unit = this.getUnit(this.max);
     } else {
-      this.unit = this.getUnit(this.min);
+      this.#unit = this.getUnit(this.min);
     }
-    this.statMax.innerHTML = this.getDispVal(this.max, this.unit);
-    this.statMin.innerHTML = this.getDispVal(this.min, this.unit);
-    this.statAve.innerHTML = this.getDispVal(this.ave, this.unit);
-    this.statUnit.innerHTML = this.unit + this.mode;
+    this.statMax.innerHTML = this.getDispVal(this.max, this.#unit);
+    this.statMin.innerHTML = this.getDispVal(this.min, this.#unit);
+    this.statAve.innerHTML = this.getDispVal(this.ave, this.#unit);
+    this.statUnit.innerHTML = this.#unit + this.mode;
   }
 
 }

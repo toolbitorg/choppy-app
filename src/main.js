@@ -2,13 +2,14 @@
 //import { app, BrowserWindow } from 'electron';
 //import path from 'node:path';
 //import started from 'electron-squirrel-startup';
-const { app, BrowserWindow, autoUpdater, dialog ,ipcMain } = require('electron');
+const { app, BrowserWindow, autoUpdater, dialog , ipcMain, crashReporter } = require('electron');
 const path = require('node:path');
 const started = require('electron-squirrel-startup');
 
 const windowStateKeeper = require('electron-window-state');
 let mainWindow;
 
+app.disableHardwareAcceleration();
 
 // Logging
 const log = require('electron-log');
@@ -16,6 +17,14 @@ autoUpdater.logger = log;
 autoUpdater.logger.transports.file.level = 'info';
 log.info('App starting...');
 
+crashReporter.start({
+  productName: 'choppy-app',
+  companyName: 'Toolbit',
+  uploadToServer: false,
+  compress: true,
+  ignoreSystemCrashHandler: false,
+  extra: { version: app.getVersion() }
+});
 
 const Store = require('electron-store');
 store = new Store({
@@ -34,26 +43,16 @@ const id = powerSaveBlocker.start('prevent-display-sleep');
 if (started) {
   app.quit();
 }
-
-function handleSetTitle(event, title) {
-  const webContents = event.sender;
-  const win = BrowserWindow.fromWebContents(webContents);
-  if(title) {
-    win.setTitle(title + ' - Choppy ' + app.getVersion());
-  } else {
-    win.setTitle('Choppy ' + app.getVersion());
-  }
-}
-
-const createWindow = () => {
+ 
+async function createWindow() {
   // Create the browser window.
-  let mainWindowState =windowStateKeeper({
+  let mainWindowState = windowStateKeeper({
     defaultWidth: 580,
     defaultHeight: 80
   });
 
-//  const mainWindow = new BrowserWindow({
   mainWindow = new BrowserWindow({
+    show: false,
     'x': mainWindowState.x,
     'y': mainWindowState.y,
     'width': mainWindowState.width,
@@ -62,8 +61,7 @@ const createWindow = () => {
     minWidth: 580,
     maxWidth: 1920,
     minHeight: 80,
-//    maxHeight: 640+20,
-    maxHeight: 1000+20,
+    maxHeight: 1080,
     webPreferences: {
       nodeIntegration: true, // Node.jsの統合を有効化
       contextIsolation: false, // コンテキスト分離を無効化
@@ -73,19 +71,38 @@ const createWindow = () => {
     title: "Choppy " + app.getVersion()
   });
 
-
   // Let us register listeners on the window, so we can update the state
   // automatically (the listeners will be removed when the window is closed)
   // and restore the maximized or full screen state
   mainWindowState.manage(mainWindow);
+  
+  // Wait for initialization of Chromium
+  await new Promise((resolve) => setTimeout(resolve, 100));
 
-  // and load the index.html of the app.
-  mainWindow.loadFile(path.join(__dirname, 'index.html'));
+  const indexPath = path.join(__dirname, "index.html");
 
-  // Open the DevTools.
+  mainWindow.loadFile(indexPath).catch(err => {
+    console.error("Initial load failed, retrying:", err);
+    setTimeout(() => {
+      mainWindow.loadFile(indexPath).catch(e => console.error("Retry failed:", e));
+    }, 300);
+  });
+
+  mainWindow.webContents.on("did-fail-load", (event, code, desc, url) => {
+    console.warn("did-fail-load:", code, desc, url);
+    setTimeout(() => mainWindow.loadFile(indexPath), 300);
+  });
+
+  mainWindow.webContents.once("did-finish-load", () => {
+    console.log('Renderer fully loaded');
+    mainWindow.show();
+  });
+
   if (!app.isPackaged) {
-    mainWindow.webContents.openDevTools();
+    setTimeout(() => mainWindow.webContents.openDevTools(), 500);
   }
+
+  return mainWindow;
 };
 
 const gotTheLock = app.requestSingleInstanceLock();
@@ -99,7 +116,6 @@ if (!gotTheLock) {
 // initialization and is ready to create browser windows.
 // Some APIs can only be used after this event occurs.
 app.whenReady().then( async () => {
-  ipcMain.on('set-title', handleSetTitle);  
 
   if(!store.get('agreement')) {
     const returnValue = await dialog.showMessageBox({
@@ -118,7 +134,8 @@ app.whenReady().then( async () => {
     }  
   }
 
-  createWindow();
+  await createWindow();
+  log.info('Create window');
 
   // On OS X it's common to re-create a window in the app when the
   // dock icon is clicked and there are no other windows open.
@@ -190,27 +207,30 @@ if (app.isPackaged) {
   });
 }
 
+ipcMain.on('set-title', function(event, title) {
+  const webContents = event.sender;
+  const win = BrowserWindow.fromWebContents(webContents);
+  if(title) {
+    win.setTitle(title + ' - Choppy ' + app.getVersion());
+  } else {
+    win.setTitle('Choppy ' + app.getVersion());
+  }
+});
 
-/*
-ipc.on('get-app-version', function(event) {
+ipcMain.on('get-app-version', function(event) {
   event.sender.send('got-app-version', app.getVersion())
-})
-
-ipc.on('set-name', function(event) {
-  mainWindow.title =  "Choppy app " + app.getVersion()
-
-  event.sender.send('got-app-version', app.getVersion())
-})
-*/
+});
 
 ipcMain.on("set-store-data", function(event, key, data) {
+//  console.log('set-store-data key: ' + key + ', data: ' + data);
   store.set(key, data);
-})
+});
 
 ipcMain.on("get-store-data", function(event, key) {
+//  console.log('get-store-data key: ' + key + ', data: ' + store.get(key));
   event.returnValue = store.get(key);
-})
+});
 
-
-
-
+ipcMain.on('log-to-terminal', (event, msg) => {
+  console.log('[Renderer]', msg);
+});

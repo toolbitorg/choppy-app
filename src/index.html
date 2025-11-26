@@ -12,12 +12,12 @@
 <body id="main">
   <div id="wrap">
     <div class="content">
-      <div id="dmm-container0" class="clearfix"></div>
-      <div id="dmm-container1" class="clearfix"></div>
-      <div id="dmm-container2" class="clearfix"></div>
-      <div id="dmm-container3" class="clearfix"></div>
-      <div id="second" class="clearfix">
-        <select id="interval" name="interval" class="mode">
+      <div id="dmm-container0"></div>
+      <div id="dmm-container1"></div>
+      <div id="dmm-container2"></div>
+      <div id="dmm-container3"></div>
+      <div class="control-container">
+        <select id="interval" name="interval" class="dropdown">
           <option selected="selected">Fast</option>
           <option>Mid</option>
           <option>Slow</option>
@@ -28,20 +28,30 @@
           <button id="load" type="button" name="load">LOAD</button>
         </div>
       </div>
-      <div>
-        <div id="stat-container0" class="hide"></div>
-        <div id="stat-container1" class="hide"></div>
-        <div id="stat-container2" class="hide"></div>
-        <div id="stat-container3" class="hide"></div>
-        <div id="stat-time" class="hide">
-          <div class="stat-long-box">
-            <p id="stat-time-label" class="stat-long-label">Time</p>
-            <p id="stat-time-val" class="stat-long-val">H:M:S.msec</p>
-          </div>
+      <div class="stat-group">
+        <div id="stat-container0" class="stat-container"></div>
+        <div id="stat-container1" class="stat-container"></div>
+        <div id="stat-container2" class="stat-container"></div>
+        <div id="stat-container3" class="stat-container"></div>
+        <div id="stat-container4" class="stat-container"></div>
+        <div id="stat-container5" class="stat-container"></div>
+        <div id="stat-container6" class="stat-container"></div>
+        <div id="stat-container7" class="stat-container"></div>
+      </div>
+      <div id="top-of-chart" class="top-of-chart">
+        <div class="choice-box">
+          <form>
+            <label><input type="radio" name="choice" value="V" checked>V</label>
+            <label><input type="radio" name="choice" value="A">A</label>
+          </form>
+        </div>
+        <div id="stat-time" class="stat-time-box">
+          <div id="stat-time-label" class="stat-time-label">Time</div>
+          <div id="stat-time-val" class="stat-time-val">H:M:S.msec</div>
         </div>
       </div>
-      <div id="chart-container" class="hide"></div>
-      <div id="graph-menu" class="hide">
+      <div id="chart-container"></div>
+      <div id="graph-menu">
         <div class="switch">
           <div class="runbtn">
             <input id="run" type="checkbox" name="run" /><label for="run"></label>
