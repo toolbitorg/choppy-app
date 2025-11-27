@@ -58,7 +58,7 @@ async function createWindow() {
     'width': mainWindowState.width,
 //    'height': mainWindowState.height,
     'height': 80,
-    minWidth: 580,
+    minWidth: 600,
     maxWidth: 1920,
     minHeight: 80,
     maxHeight: 1080,
@@ -233,4 +233,14 @@ ipcMain.on("get-store-data", function(event, key) {
 
 ipcMain.on('log-to-terminal', (event, msg) => {
   console.log('[Renderer]', msg);
+});
+
+ipcMain.on('set-win-min-width', (event, width) => {
+  const [minW, minH] = mainWindow.getMinimumSize();
+  mainWindow.setMinimumSize(width, minH);
+
+  const [currentWidth, currentHeight] = mainWindow.getSize();
+  if (currentWidth < width) {
+    mainWindow.setSize(width, currentHeight)
+  }
 });

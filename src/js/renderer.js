@@ -40,7 +40,7 @@ var dmmctrl = Array(4);
 var stat = Array(8);
 
 var timeInterval;
-var measurementData = [[],[],[],[],[],[],[],[]];
+var measurementData = [[],[],[],[],[],[],[],[],[],[],[],[]];
 var plotDataForChart = [[],[],[],[]];
 var plotStart = 0;
 
@@ -276,7 +276,7 @@ function initialize() {
         }
         plotInfo = data[0];
         if(plotInfo.logFormat == undefined) {  // before logFormat == 0.2
-          measurementData = [[], [], [], [], [], [], [], []];
+          measurementData = [[], [], [], [], [], [], [], [], [], [], [], []];
           for(var i=0; i<data[1].length; i++) {
             measurementData[i] = data[1][i];
             measurementData[i].records = data[2][i];
@@ -312,7 +312,7 @@ function initialize() {
   });
   document.getElementById('reset-zoom').disabled = true;
 
-  // When changing choice of 'V' or 'A'
+  // When changing choice of 'V', 'A' or 'W'
   const radios = document.querySelectorAll('input[name="choice"]');
   radios.forEach(radio => {
     radio.addEventListener('change', () => {
@@ -421,43 +421,54 @@ function clearGraph() {
   waveformsNum = 0;
   if(document.getElementById('load').disabled==true) {
     // When handling data loaded from a file
-    for(var i=0; i<8; i++) {
+    for(var i=0; i<12; i++) {
       if(measurementData[i].length != 0) {
         waveformsNum++;
       }
     }
   } else {
-    measurementData = [[], [], [], [], [], [], [], []];
+    measurementData = [[], [], [], [], [], [], [], [], [], [], [], []];
     for(var i=0; i<connectedDmmNum; i++) {
       dmmctrl[i].clearRecords();
-      if(dmmctrl[i].mode === 'V+A' || dmmctrl[i].mode === 'V') {
+      if(dmmctrl[i].mode === 'V' || dmmctrl[i].mode === 'V+A' || dmmctrl[i].mode === 'V+A+W') {
         measurementData[waveformsNum] = dmmctrl[i].measurements.voltage;
         waveformsNum++;
       }
-      if(dmmctrl[i].mode === 'V+A' || dmmctrl[i].mode === 'A') {
+      if(dmmctrl[i].mode === 'A' || dmmctrl[i].mode === 'V+A' || dmmctrl[i].mode === 'V+A+W') {
         measurementData[waveformsNum] = dmmctrl[i].measurements.current;
+        waveformsNum++;
+      }
+      if(dmmctrl[i].mode === 'V+A+W') {
+        measurementData[waveformsNum] = dmmctrl[i].measurements.wattage;
         waveformsNum++;
       }
     }
   }
 
-  // Setup radio buttons of V/A
+  // Setup radio buttons of V/A/W
   const val = ipcRenderer.sendSync('get-store-data', 'choice');
   if(val) {
     document.querySelector('input[name="choice"][value="' + val + '"]').checked = true;
   }
   document.querySelector('input[name="choice"][value="V"]').disabled = true;
   document.querySelector('input[name="choice"][value="A"]').disabled = true;
+  document.querySelector('input[name="choice"][value="W"]').disabled = true;
 
   for(var i=0; i<waveformsNum; i++) {
-    if(measurementData[i].mode === 'V+A' || measurementData[i].mode === 'V') {
+    if(measurementData[i].mode === 'V') {
       document.querySelector('input[name="choice"][value="V"]').disabled = false;
     }
-    if(measurementData[i].mode === 'V+A' || measurementData[i].mode === 'A') {
+    if(measurementData[i].mode === 'A') {
       document.querySelector('input[name="choice"][value="A"]').disabled = false;
+    }
+    if(measurementData[i].mode === 'W') {
+      document.querySelector('input[name="choice"][value="W"]').disabled = false;
     }
   }
 
+  if(document.querySelector('input[name="choice"][value="W"]').disabled == true) {
+    document.querySelector('input[name="choice"][value="V"]').checked = true;
+  }
   if(document.querySelector('input[name="choice"][value="V"]').disabled == true) {
     document.querySelector('input[name="choice"][value="A"]').checked = true;
   }

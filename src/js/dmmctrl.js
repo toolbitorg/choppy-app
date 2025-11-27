@@ -24,6 +24,12 @@ class Dmmctrl {
       records: [],
       color: undefined,
     },
+    wattage: {
+      name: undefined,
+      mode: undefined,
+      records: [],
+      color: undefined,
+    }
   };
   
   constructor(id, fsm, serial, devname) {
@@ -50,10 +56,11 @@ class Dmmctrl {
   clearRecords() {
     this.measurements.voltage.records = [];
     this.measurements.current.records = [];
+    this.measurements.wattage.records = [];
   }
 
   initialize() {
-    const items = ['V', 'A'];
+    const items = ['V', 'A', 'W'];
 
     const divElem = document.getElementById(this.id);
     divElem.innerHTML = 
@@ -63,6 +70,7 @@ class Dmmctrl {
       '    <option selected="selected">V</option>' +
       '    <option>A</option>' +
       '    <option>V+A</option>' +
+      '    <option>V+A+W</option>' +
       '  </select>' +
       items.map(item => 
         '<div id="' + this.id + '-meter' + item + '-val" class="meter-val">_.___</div>' +
@@ -94,31 +102,60 @@ class Dmmctrl {
       if (this.mode === items[0]) {
         this.measurements.voltage.mode = items[0];
         this.measurements.current.mode = undefined;
+        this.measurements.wattage.mode = undefined;
         document.getElementById(this.id + '-meter' + items[0] + '-val').style.display = '';
         document.getElementById(this.id + '-meter' + items[0] + '-unit').style.display = '';
         document.getElementById(this.id + '-ctrl' + items[0]).style.display = '';
         document.getElementById(this.id + '-meter' + items[1] + '-val').style.display = 'none';
         document.getElementById(this.id + '-meter' + items[1] + '-unit').style.display = 'none';
         document.getElementById(this.id + '-ctrl' + items[1]).style.display = 'none';
+        document.getElementById(this.id + '-meter' + items[2] + '-val').style.display = 'none';
+        document.getElementById(this.id + '-meter' + items[2] + '-unit').style.display = 'none';
+        document.getElementById(this.id + '-ctrl' + items[2]).style.display = 'none';
       } else if (this.mode === items[1]) {
         this.measurements.voltage.mode = undefined;
         this.measurements.current.mode = items[1];
+        this.measurements.wattage.mode = undefined;
         document.getElementById(this.id + '-meter' + items[0] + '-val').style.display = 'none';
         document.getElementById(this.id + '-meter' + items[0] + '-unit').style.display = 'none';
         document.getElementById(this.id + '-ctrl' + items[0]).style.display = 'none';
         document.getElementById(this.id + '-meter' + items[1] + '-val').style.display = '';
         document.getElementById(this.id + '-meter' + items[1] + '-unit').style.display = '';
         document.getElementById(this.id + '-ctrl' + items[1]).style.display = '';
+        document.getElementById(this.id + '-meter' + items[2] + '-val').style.display = 'none';
+        document.getElementById(this.id + '-meter' + items[2] + '-unit').style.display = 'none';
+        document.getElementById(this.id + '-ctrl' + items[2]).style.display = 'none';
+        ipcRenderer.send('set-win-min-width', 600);
       } else if (this.mode === items[0] + '+' + items[1]) {
         this.measurements.voltage.mode = items[0];
         this.measurements.current.mode = items[1];
+        this.measurements.wattage.mode = undefined;
         document.getElementById(this.id + '-meter' + items[0] + '-val').style.display = '';
         document.getElementById(this.id + '-meter' + items[0] + '-unit').style.display = '';
         document.getElementById(this.id + '-ctrl' + items[0]).style.display = '';
         document.getElementById(this.id + '-meter' + items[1] + '-val').style.display = '';
         document.getElementById(this.id + '-meter' + items[1] + '-unit').style.display = '';
         document.getElementById(this.id + '-ctrl' + items[1]).style.display = '';
+        document.getElementById(this.id + '-meter' + items[2] + '-val').style.display = 'none';
+        document.getElementById(this.id + '-meter' + items[2] + '-unit').style.display = 'none';
+        document.getElementById(this.id + '-ctrl' + items[2]).style.display = 'none';
+        ipcRenderer.send('set-win-min-width', 600);
+      } else if (this.mode === items[0] + '+' + items[1] + '+' + items[2]) {
+        this.measurements.voltage.mode = items[0];
+        this.measurements.current.mode = items[1];
+        this.measurements.wattage.mode = items[2];
+        document.getElementById(this.id + '-meter' + items[0] + '-val').style.display = '';
+        document.getElementById(this.id + '-meter' + items[0] + '-unit').style.display = '';
+        document.getElementById(this.id + '-ctrl' + items[0]).style.display = '';
+        document.getElementById(this.id + '-meter' + items[1] + '-val').style.display = '';
+        document.getElementById(this.id + '-meter' + items[1] + '-unit').style.display = '';
+        document.getElementById(this.id + '-ctrl' + items[1]).style.display = '';
+        document.getElementById(this.id + '-meter' + items[2] + '-val').style.display = '';
+        document.getElementById(this.id + '-meter' + items[2] + '-unit').style.display = '';
+        document.getElementById(this.id + '-ctrl' + items[2]).style.display = '';
+        ipcRenderer.send('set-win-min-width', 850);
       }
+
 
       if(this.fsm.state=='run' || this.fsm.state=='run-zoom')  {
         this.fsm.onStopLogging();
@@ -142,9 +179,11 @@ class Dmmctrl {
       ipcRenderer.send('log-to-terminal', '#dmm.getColor() is done');
       this.measurements.voltage.color = this.color;
       this.measurements.current.color = this.color;
+      this.measurements.wattage.color = this.color;
     } else {
       this.measurements.voltage.color = 5;  // Default green
       this.measurements.current.color = 5;
+      this.measurements.wattage.color = 5;
     }
     document.getElementById(this.id + '-ch-color').classList.remove('color-brown');
     document.getElementById(this.id + '-ch-color').classList.remove('color-red');
@@ -163,6 +202,7 @@ class Dmmctrl {
   acquisition(tdiff, isItRecording) {
     var volt;
     var curr;
+    var watt;
 
     if(this.mode==='V') {
       volt = this.#dmm.getVoltage();
@@ -171,6 +211,10 @@ class Dmmctrl {
     } else if(this.mode==='V+A') {
       volt = this.#dmm.getVoltage();
       curr = this.#dmm.getCurrent();
+    } else if(this.mode==='V+A+W') {
+      volt = this.#dmm.getVoltage();
+      curr = this.#dmm.getCurrent();
+      watt = volt * curr;
     };
 
     if(!this.#holdChecked && !this.#hold) {
@@ -180,6 +224,9 @@ class Dmmctrl {
       if(curr!==undefined) {
         this.showVal(curr, 'A');
       }
+      if(watt!==undefined) {
+        this.showVal(watt, 'W');
+      }
     }
 
     if(isItRecording) {
@@ -188,6 +235,9 @@ class Dmmctrl {
       }
       if(!isNaN(curr) && curr!==undefined) {
         this.measurements.current.records.push({x: tdiff, y: curr});
+      }
+      if(!isNaN(watt) && watt!==undefined) {
+        this.measurements.wattage.records.push({x: tdiff, y: watt});
       }
     }
   }
