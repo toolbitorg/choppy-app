@@ -174,19 +174,19 @@ class Dmmctrl {
     };
 
     if(!this.#holdChecked && !this.#hold) {
-      if(volt!==NaN && volt!==undefined) {
+      if(volt!==undefined) {
         this.showVal(volt, 'V');
       }
-      if(curr!==NaN && curr!==undefined) {
+      if(curr!==undefined) {
         this.showVal(curr, 'A');
       }
     }
 
     if(isItRecording) {
-      if(volt!==NaN && volt!==undefined) {
+      if(!isNaN(volt) && volt!==undefined) {
         this.measurements.voltage.records.push({x: tdiff, y: volt});
       }
-      if(curr!==NaN && curr!==undefined) {
+      if(!isNaN(curr) && curr!==undefined) {
         this.measurements.current.records.push({x: tdiff, y: curr});
       }
     }
