@@ -12,7 +12,8 @@ const HEIGHT_METER = 61;
 const HEIGHT_STAT = 31;
 const HEIGHT_GRAPH = 465;
 const WIDTH_AUTO_FIT = 400;
-const maxDmmNum = 4;
+const MAX_DMM_NUM = 4;
+const MAX_STAT_NUM = 12;
 
 const { ipcRenderer } = require('electron')
 
@@ -37,7 +38,7 @@ var connectedDmmNum = 0;
 var waveformsNum = 0;
 
 var dmmctrl = Array(4);
-var stat = Array(8);
+var stat = Array(12);
 
 var timeInterval;
 var measurementData = [[],[],[],[],[],[],[],[],[],[],[],[]];
@@ -47,7 +48,9 @@ var plotStart = 0;
 
 var dmmContainers = ['dmm-container0', 'dmm-container1', 'dmm-container2', 'dmm-container3'];
 var statContainers = ['stat-container0', 'stat-container1', 'stat-container2', 'stat-container3',
-                      'stat-container4', 'stat-container5', 'stat-container6', 'stat-container7'];
+                      'stat-container4', 'stat-container5', 'stat-container6', 'stat-container7',
+                      'stat-container8', 'stat-container9', 'stat-container10', 'stat-container11'                  
+                    ];
 var chartContainer = document.getElementById('chart-container');
 var chartData;
 var chartOptions;
@@ -161,6 +164,10 @@ var fsm = new StateMachine({
       document.getElementById('stat-container5').style.display = 'none';
       document.getElementById('stat-container6').style.display = 'none';
       document.getElementById('stat-container7').style.display = 'none';
+      document.getElementById('stat-container8').style.display = 'none';
+      document.getElementById('stat-container9').style.display = 'none';
+      document.getElementById('stat-container10').style.display = 'none';
+      document.getElementById('stat-container11').style.display = 'none';
       document.getElementById("top-of-chart").style.display = 'none';
       resizeWindows();
     },
@@ -246,6 +253,10 @@ function initialize() {
   document.getElementById('stat-container5').style.display = 'none';
   document.getElementById('stat-container6').style.display = 'none';
   document.getElementById('stat-container7').style.display = 'none';
+  document.getElementById('stat-container8').style.display = 'none';
+  document.getElementById('stat-container9').style.display = 'none';
+  document.getElementById('stat-container10').style.display = 'none';
+  document.getElementById('stat-container11').style.display = 'none';
   document.getElementById("top-of-chart").style.display = 'none';
   document.getElementById('graph').addEventListener('change', function() {
     if(this.checked) {
@@ -340,7 +351,7 @@ function initialize() {
 //  openDevice();
   window.setTimeout(openDevice, 1000);
  
-  for(var i=0; i<8; i++) {
+  for(var i=0; i<MAX_STAT_NUM; i++) {
     stat[i] = new Stat(statContainers[i]);
   }
 }
@@ -357,10 +368,10 @@ function openDevice() {
     window.setTimeout(openDevice, 3000);
     return;
   }
-  if(devlist.length<maxDmmNum) {
+  if(devlist.length<MAX_DMM_NUM) {
     connectedDmmNum = devlist.length;
   } else {
-    connectedDmmNum = maxDmmNum;
+    connectedDmmNum = MAX_DMM_NUM;
   }
 
   console.log(devlist);
@@ -421,7 +432,7 @@ function clearGraph() {
   waveformsNum = 0;
   if(document.getElementById('load').disabled==true) {
     // When handling data loaded from a file
-    for(var i=0; i<12; i++) {
+    for(var i=0; i<MAX_STAT_NUM; i++) {
       if(measurementData[i].length != 0) {
         waveformsNum++;
       }
@@ -579,7 +590,7 @@ function initializeStat() {
   var divElem = document.getElementById('stat-time-val');
   divElem.innerHTML = 'H:M:S.msec';
 
-  for(var i=0; i<8; i++) {
+  for(var i=0; i<MAX_STAT_NUM; i++) {
     var divElem = document.getElementById('stat-container' + i);
     if(i<waveformsNum) {
       divElem.style.display = '';
