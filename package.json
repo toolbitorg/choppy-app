@@ -1,7 +1,7 @@
 {
   "name": "choppy-app",
   "productName": "choppy-app",
-  "version": "0.4.1",
+  "version": "0.4.2",
   "description": "Choppy application for voltage and current measurement",
   "main": "src/main.js",
   "repository": {

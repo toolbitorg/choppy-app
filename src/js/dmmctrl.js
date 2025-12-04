@@ -32,11 +32,12 @@ class Dmmctrl {
     }
   };
   
-  constructor(id, fsm, serial, devname) {
+  constructor(id, fsm, serial, devname, color) {
     this.id = id;
     this.fsm = fsm;
     this.serial = serial;
     this.devname = devname;
+    this.color = color;
 
     if(devname==='Choppy') {
       this.#dmm = new Choppy();
@@ -173,18 +174,9 @@ class Dmmctrl {
   }
 
   setColor() {
-    if(this.devname==='Choppy') {
-      ipcRenderer.send('log-to-terminal', 'Call #dmm.getColor()');
-      this.color = this.#dmm.getColor();
-      ipcRenderer.send('log-to-terminal', '#dmm.getColor() is done');
-      this.measurements.voltage.color = this.color;
-      this.measurements.current.color = this.color;
-      this.measurements.wattage.color = this.color;
-    } else {
-      this.measurements.voltage.color = 5;  // Default green
-      this.measurements.current.color = 5;
-      this.measurements.wattage.color = 5;
-    }
+    this.measurements.voltage.color = this.color;
+    this.measurements.current.color = this.color;
+    this.measurements.wattage.color = this.color;
     document.getElementById(this.id + '-ch-color').classList.remove('color-brown');
     document.getElementById(this.id + '-ch-color').classList.remove('color-red');
     document.getElementById(this.id + '-ch-color').classList.remove('color-blue');

@@ -378,7 +378,7 @@ function openDevice() {
   ipcRenderer.send('log-to-terminal', devlist);
 
   for(var i=0; i<connectedDmmNum; i++) {
-    dmmctrl[i] = new Dmmctrl(dmmContainers[i], fsm, devlist[i][0], devlist[i][1]);
+    dmmctrl[i] = new Dmmctrl(dmmContainers[i], fsm, devlist[i][0], devlist[i][1], devlist[i][2]);
     ipcRenderer.send('log-to-terminal', 'new Dmmctrl instance');
     document.getElementById('graph').disable = false;
   }
