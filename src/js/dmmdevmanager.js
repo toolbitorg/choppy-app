@@ -44,7 +44,7 @@ class DmmDevManager {
     for(var i=0; i<serials.size(); i++) {
       if(dmm.open(serials.get(i))) {
         // Fail to open
-        return res;
+        return devlist;
       }
       //console.log('ProductName / Serial / FwVer / Color');
       console.log('Name:'+dmm.getProductName()+' Serial:'+dmm.getProductSerial()+' FW:'+dmm.getFirmVersion()+' Color:'+dmm.getColor());
