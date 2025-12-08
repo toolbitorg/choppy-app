@@ -11,6 +11,44 @@ let mainWindow;
 
 app.disableHardwareAcceleration();
 
+// Support GA4
+const fetch = require('node-fetch');
+const os = require('os');
+const { randomUUID } = require('crypto');
+
+const GA4_ID = 'G-NP5KKYMQY2';
+const API_SECRET = 'rsHdwuRHTYivFQQDDWf-qg';
+
+const clientId = randomUUID();
+
+function sendEvent(eventName, params = {}) {
+  const url = `https://www.google-analytics.com/mp/collect?measurement_id=${GA4_ID}&api_secret=${API_SECRET}`;
+
+  const body = {
+    client_id: clientId,
+    events: [
+      {
+        name: eventName,
+        params: {
+//          debug_mode: true,
+          app_version: app.getVersion(),
+          os: process.platform,
+          os_version: os.release(),
+          ...params,
+        },
+      },
+    ],
+  };
+
+  if(store.get('agreement')) {
+    fetch(url, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body),
+    }).catch(() => {});
+  }
+}
+
 // Logging
 const log = require('electron-log');
 autoUpdater.logger = log;
@@ -136,6 +174,8 @@ app.whenReady().then( async () => {
 
   await createWindow();
   log.info('Create window');
+
+  sendEvent('app_start');
 
   // On OS X it's common to re-create a window in the app when the
   // dock icon is clicked and there are no other windows open.

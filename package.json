@@ -1,7 +1,7 @@
 {
   "name": "choppy-app",
   "productName": "choppy-app",
-  "version": "0.4.2",
+  "version": "0.4.3",
   "description": "Choppy application for voltage and current measurement",
   "main": "src/main.js",
   "repository": {
@@ -17,6 +17,7 @@
     "lint": "echo \"No linting configured\""
   },
   "dependencies": {
+    "crypto": "^1.0.1",
     "electron-log": "^5.2.4",
     "electron-squirrel-startup": "^1.0.1",
     "electron-store": "^8.2.0",
