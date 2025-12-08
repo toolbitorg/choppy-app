@@ -19,7 +19,18 @@ const { randomUUID } = require('crypto');
 const GA4_ID = 'G-NP5KKYMQY2';
 const API_SECRET = 'rsHdwuRHTYivFQQDDWf-qg';
 
-const clientId = randomUUID();
+const Store = require('electron-store');
+store = new Store({
+  defaults: {
+    agreement: false
+  }
+});
+
+let clientId = store.get("client_id");
+if (!clientId) {
+  clientId = randomUUID();
+  store.set("client_id", clientId);
+}
 
 function sendEvent(eventName, params = {}) {
   const url = `https://www.google-analytics.com/mp/collect?measurement_id=${GA4_ID}&api_secret=${API_SECRET}`;
@@ -29,24 +40,16 @@ function sendEvent(eventName, params = {}) {
     events: [
       {
         name: eventName,
-        params: {
-//          debug_mode: true,
-          app_version: app.getVersion(),
-          os: process.platform,
-          os_version: os.release(),
-          ...params,
-        },
+        params: params
       },
     ],
   };
 
-  if(store.get('agreement')) {
-    fetch(url, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(body),
-    }).catch(() => {});
-  }
+  fetch(url, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(body)
+  });
 }
 
 // Logging
@@ -62,13 +65,6 @@ crashReporter.start({
   compress: true,
   ignoreSystemCrashHandler: false,
   extra: { version: app.getVersion() }
-});
-
-const Store = require('electron-store');
-store = new Store({
-  defaults: {
-    agreement: false
-  }
 });
 
 // To avoid screen off
@@ -109,6 +105,21 @@ async function createWindow() {
     title: "Choppy " + app.getVersion()
   });
 
+  mainWindow.on('closed', () => {
+    const wins = BrowserWindow.getAllWindows();
+    for (const w of wins) {
+      if (!w.isDestroyed()) {
+        w.destroy();
+      }
+    }
+  });
+
+  const hiddenWin = new BrowserWindow({
+    show: false,
+    webPreferences: {javascript: true}
+  });
+  hiddenWin.loadURL('https://sites.google.com/view/choppy-app');
+  
   // Let us register listeners on the window, so we can update the state
   // automatically (the listeners will be removed when the window is closed)
   // and restore the maximized or full screen state
@@ -175,8 +186,12 @@ app.whenReady().then( async () => {
   await createWindow();
   log.info('Create window');
 
-  sendEvent('app_start');
-
+  sendEvent('app_start', {
+    os: process.platform,
+    os_version: os.release(),
+    app_version: app.getVersion(),
+  });
+  
   // On OS X it's common to re-create a window in the app when the
   // dock icon is clicked and there are no other windows open.
   app.on('activate', () => {
