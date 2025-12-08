@@ -1,7 +1,7 @@
 {
   "name": "choppy-app",
   "productName": "choppy-app",
-  "version": "0.4.3",
+  "version": "0.4.4",
   "description": "Choppy application for voltage and current measurement",
   "main": "src/main.js",
   "repository": {
@@ -23,7 +23,7 @@
     "electron-store": "^8.2.0",
     "electron-window-state": "^5.0.3",
     "javascript-state-machine": "^3.1.0",
-    "node-fetch": "^3.3.2"
+    "node-fetch": "^2.7.0"
   },
   "devDependencies": {
     "@electron-forge/cli": "^7.6.0",
