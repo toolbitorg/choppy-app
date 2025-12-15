@@ -61,10 +61,12 @@ class Dmmctrl {
   }
 
   initialize() {
-    const items = ['V', 'A', 'W'];
-
     const divElem = document.getElementById(this.id);
-    divElem.innerHTML = 
+    let items = [];
+
+    if(this.devname==='Choppy') {
+      items = ['V', 'A', 'W'];
+      divElem.innerHTML = 
       '<div id="' + this.id + '-meter-container" class="meter-container">' +
       '  <div id="' + this.id + '-ch-color" class="ch-color"></div>' +
       '  <select id="' + this.id + '-meter-mode" class="meter-mode">' +
@@ -86,6 +88,29 @@ class Dmmctrl {
         '</div>'
       ).join("") +
       '</div>';
+    } else if(this.devname==='DMM1') {
+      items = ['V', 'A'];
+      divElem.innerHTML = 
+      '<div id="' + this.id + '-meter-container" class="meter-container">' +
+      '  <div id="' + this.id + '-ch-color" class="ch-color"></div>' +
+      '  <select id="' + this.id + '-meter-mode" class="meter-mode">' +
+      '    <option selected="selected">V</option>' +
+      '    <option>A</option>' +
+      '  </select>' +
+      items.map(item => 
+        '<div id="' + this.id + '-meter' + item + '-val" class="meter-val">_.___</div>' +
+        '<div id="' + this.id + '-meter' + item + '-unit" class="meter-unit">m' + item + '</div>' +
+        '<div id="' + this.id + '-ctrl' + item + '" class="col">' +
+        '  <select id="' + this.id + '-meter' + item + '-range" class="meter-range">' +
+        '    <option selected="selected">Auto</option>' +
+        '    <option> ' + item + '</option>' +
+        '    <option>m' + item + '</option>' +
+        '    <option>u' + item + '</option>' +
+        '  </select>' +
+        '</div>'
+      ).join("") +
+      '</div>';
+    }
 
     for (const item of items) {      
       document.getElementById(this.id + '-meter' + item + '-val').addEventListener('mousedown', (event) => {
@@ -110,9 +135,11 @@ class Dmmctrl {
         document.getElementById(this.id + '-meter' + items[1] + '-val').style.display = 'none';
         document.getElementById(this.id + '-meter' + items[1] + '-unit').style.display = 'none';
         document.getElementById(this.id + '-ctrl' + items[1]).style.display = 'none';
-        document.getElementById(this.id + '-meter' + items[2] + '-val').style.display = 'none';
-        document.getElementById(this.id + '-meter' + items[2] + '-unit').style.display = 'none';
-        document.getElementById(this.id + '-ctrl' + items[2]).style.display = 'none';
+        if(this.devname==='Choppy') {
+          document.getElementById(this.id + '-meter' + items[2] + '-val').style.display = 'none';
+          document.getElementById(this.id + '-meter' + items[2] + '-unit').style.display = 'none';
+          document.getElementById(this.id + '-ctrl' + items[2]).style.display = 'none';
+        }
       } else if (this.mode === items[1]) {
         this.measurements.voltage.mode = undefined;
         this.measurements.current.mode = items[1];
@@ -123,9 +150,11 @@ class Dmmctrl {
         document.getElementById(this.id + '-meter' + items[1] + '-val').style.display = '';
         document.getElementById(this.id + '-meter' + items[1] + '-unit').style.display = '';
         document.getElementById(this.id + '-ctrl' + items[1]).style.display = '';
-        document.getElementById(this.id + '-meter' + items[2] + '-val').style.display = 'none';
-        document.getElementById(this.id + '-meter' + items[2] + '-unit').style.display = 'none';
-        document.getElementById(this.id + '-ctrl' + items[2]).style.display = 'none';
+        if(this.devname==='Choppy') {
+          document.getElementById(this.id + '-meter' + items[2] + '-val').style.display = 'none';
+          document.getElementById(this.id + '-meter' + items[2] + '-unit').style.display = 'none';
+          document.getElementById(this.id + '-ctrl' + items[2]).style.display = 'none';
+        }
         ipcRenderer.send('set-win-min-width', 600);
       } else if (this.mode === items[0] + '+' + items[1]) {
         this.measurements.voltage.mode = items[0];
