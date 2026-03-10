@@ -425,7 +425,7 @@ function openDevice() {
     }
   });
 
-  document.getElementById('save').addEventListener('change', function() {
+  document.getElementById('save').addEventListener('click', function() {
     exportData([plotInfo, measurementData]);
   });
 
