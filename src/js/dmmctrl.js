@@ -155,7 +155,6 @@ class Dmmctrl {
           document.getElementById(this.id + '-meter' + items[2] + '-unit').style.display = 'none';
           document.getElementById(this.id + '-ctrl' + items[2]).style.display = 'none';
         }
-        ipcRenderer.send('set-win-min-width', 600);
       } else if (this.mode === items[0] + '+' + items[1]) {
         this.measurements.voltage.mode = items[0];
         this.measurements.current.mode = items[1];
@@ -169,7 +168,6 @@ class Dmmctrl {
         document.getElementById(this.id + '-meter' + items[2] + '-val').style.display = 'none';
         document.getElementById(this.id + '-meter' + items[2] + '-unit').style.display = 'none';
         document.getElementById(this.id + '-ctrl' + items[2]).style.display = 'none';
-        ipcRenderer.send('set-win-min-width', 600);
       } else if (this.mode === items[0] + '+' + items[1] + '+' + items[2]) {
         this.measurements.voltage.mode = items[0];
         this.measurements.current.mode = items[1];

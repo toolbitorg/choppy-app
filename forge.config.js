@@ -4,7 +4,14 @@ const { FuseV1Options, FuseVersion } = require('@electron/fuses');
 module.exports = {
   packagerConfig: {
     asar: true,
-    icon: './images/icon'
+    icon: './images/icon',
+    win32metadata: {
+      CompanyName: "Toolibt",
+      ProductName: "Choppy-app",
+      FileDescription: "Choppy-app",
+      OriginalFilename: "choppy-app.exe",
+      LegalCopyright: "Copyright © 2025 ohamax <toolbitorg@gmail.com>"
+    }
   },
   rebuildConfig: {},
   makers: [
