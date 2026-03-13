@@ -242,6 +242,7 @@ function initialize() {
   document.getElementById('graph').disabled = true;
   disableElements(document.getElementById('main').getElementsByTagName('select'));
   disableElements(document.getElementById('main').getElementsByTagName('button'));
+  document.getElementById('plusminus').disabled = false;
   document.getElementById('load').disabled = false;
 
   document.getElementById('chart-container').style.display = 'none';
@@ -324,6 +325,45 @@ function initialize() {
   });
   document.getElementById('reset-zoom').disabled = true;
 
+  const plusminus = ipcRenderer.sendSync('get-store-data', 'plusminus');
+  if(plusminus) {
+    yaxisNegativeRange = plusminus;
+    document.getElementById('plusminus').checked = plusminus;    
+  }
+
+  document.getElementById('plusminus').addEventListener('change', function() {
+    yaxisNegativeRange = this.checked;
+    ipcRenderer.send('set-store-data', 'plusminus', yaxisNegativeRange);
+    const val = document.querySelector('input[name="choice"]:checked').value;
+    if(fsm.state==='stop' || fsm.state==='run') {
+      if(yaxisNegativeRange) {
+        delete chart.options.axisY.low;
+      } else {
+        chart.options.axisY.low = 0;
+      }
+      chart.update(chartData, chart.options); 
+    } else if(fsm.state==='run-zoom' || fsm.state==='stop-zoom') {
+      var maxVal = 0;
+      var minVal = 0;
+      for(var i=0; i<waveformsNum; i++) {
+        if(stat[i].mode===val) {
+          if(maxVal < stat[i].max) {
+            maxVal=stat[i].max;
+          }
+          if(minVal > stat[i].min) {
+            minVal=stat[i].min;
+          }
+        }
+      }
+      if(yaxisNegativeRange) {
+        chart.options.axisY.highLow = { low: minVal, high: maxVal };
+      } else {
+        chart.options.axisY.highLow = { low: 0, high: maxVal };
+      }
+      chart.update(chartData, chart.options);
+    }
+  });
+
   // When changing choice of 'V', 'A' or 'W'
   const radios = document.querySelectorAll('input[name="choice"]');
   radios.forEach(radio => {
@@ -399,12 +439,6 @@ function openDevice() {
   }
   setTimeInterval(document.getElementById('interval').value);
 
-  const plusminus = ipcRenderer.sendSync('get-store-data', 'plusminus');
-  if(plusminus) {
-    yaxisNegativeRange = plusminus;
-    document.getElementById('plusminus').checked = plusminus;    
-  }
-
   document.getElementById('interval').addEventListener('change', (event) => {
     setTimeInterval(event.target.value);
     ipcRenderer.send('set-store-data', 'interval', event.target.value);
@@ -427,39 +461,6 @@ function openDevice() {
 
   document.getElementById('save').addEventListener('click', function() {
     exportData([plotInfo, measurementData]);
-  });
-
-  document.getElementById('plusminus').addEventListener('change', function() {
-    yaxisNegativeRange = this.checked;
-    ipcRenderer.send('set-store-data', 'plusminus', yaxisNegativeRange);
-    const val = document.querySelector('input[name="choice"]:checked').value;
-    if(fsm.state==='stop' || fsm.state==='run') {
-      if(yaxisNegativeRange) {
-        delete chart.options.axisY.low;
-      } else {
-        chart.options.axisY.low = 0;
-      }
-      chart.update(chartData, chart.options); 
-    } else if(fsm.state==='run-zoom' || fsm.state==='stop-zoom') {
-      var maxVal = 0;
-      var minVal = 0;
-      for(var i=0; i<waveformsNum; i++) {
-        if(stat[i].mode===val) {
-          if(maxVal < stat[i].max) {
-            maxVal=stat[i].max;
-          }
-          if(minVal > stat[i].min) {
-            minVal=stat[i].min;
-          }
-        }
-      }
-      if(yaxisNegativeRange) {
-        chart.options.axisY.highLow = { low: minVal, high: maxVal };
-      } else {
-        chart.options.axisY.highLow = { low: 0, high: maxVal };
-      }
-      chart.update(chartData, chart.options);
-    }
   });
 
   enableElements(document.getElementById('main').getElementsByTagName('input'));
